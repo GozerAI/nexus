@@ -21,6 +21,9 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Install gozerai-telemetry
+        run: pip install "gozerai-telemetry @ git+https://github.com/chrisarseno/gozerai-telemetry.git"
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip

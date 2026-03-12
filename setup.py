@@ -16,7 +16,7 @@ setup(
     description="Advanced AI Ensemble, Orchestrator & Consciousness Framework",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/GozerAI/nexus",
+    url="https://github.com/chrisarseno/Nexus",
     packages=find_packages(where="src"),
     package_dir={"": "src"},
     classifiers=[

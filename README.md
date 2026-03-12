@@ -69,7 +69,7 @@
 
 ```bash
 # Clone the repository
-git clone https://github.com/GozerAI/nexus.git
+git clone https://github.com/chrisarseno/Nexus.git
 cd Nexus
 
 # Install dependencies
@@ -227,7 +227,7 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 
 ```bash
 # Clone repo
-git clone https://github.com/GozerAI/nexus.git
+git clone https://github.com/chrisarseno/Nexus.git
 cd Nexus
 
 # Install dev dependencies
@@ -253,7 +253,7 @@ If you use Nexus in your research, please cite:
   title = {Nexus: Advanced AI Ensemble, Orchestrator \& Consciousness Framework},
   author = {Arsenault, Christopher R.},
   year = {2025},
-  url = {https://github.com/GozerAI/nexus}
+  url = {https://github.com/chrisarseno/Nexus}
 }
 ```
 
@@ -261,8 +261,8 @@ If you use Nexus in your research, please cite:
 
 ## Community
 
-- **Issues**: [GitHub Issues](https://github.com/GozerAI/nexus/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/GozerAI/nexus/discussions)
+- **Issues**: [GitHub Issues](https://github.com/chrisarseno/Nexus/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/chrisarseno/Nexus/discussions)
 - **Email**: chris@gozerai.com
 
 ---

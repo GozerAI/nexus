@@ -27,10 +27,15 @@ class MemoryBackend(CacheBackend):
     Good for development and testing.
     """
     
-    def __init__(self):
-        """Initialize memory cache."""
+    def __init__(self, max_size: int = 10000):
+        """Initialize memory cache.
+
+        Args:
+            max_size: Maximum number of entries before eviction (default 10000).
+        """
         self.cache: Dict[str, CacheEntry] = {}
-        logger.info("MemoryBackend initialized")
+        self.max_size = max_size
+        logger.info(f"MemoryBackend initialized (max_size={max_size})")
     
     def get(self, key: str) -> Optional[Any]:
         """Get value from memory cache."""
@@ -50,6 +55,15 @@ class MemoryBackend(CacheBackend):
     def set(self, key: str, value: Any, ttl: int = 3600) -> bool:
         """Set value in memory cache."""
         try:
+            # Evict oldest entries if at capacity
+            if len(self.cache) >= self.max_size and key not in self.cache:
+                # Remove oldest entries (by earliest expires_at)
+                entries_by_expiry = sorted(self.cache.items(), key=lambda x: x[1].expires_at)
+                evict_count = max(1, len(self.cache) // 10)  # Evict 10% at a time
+                for evict_key, _ in entries_by_expiry[:evict_count]:
+                    del self.cache[evict_key]
+                logger.debug(f"Evicted {evict_count} cache entries (max_size={self.max_size})")
+
             expires_at = time.time() + ttl
             self.cache[key] = CacheEntry(value=value, expires_at=expires_at)
             logger.debug(f"Cached key: {key} (TTL={ttl}s)")

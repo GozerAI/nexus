@@ -4,32 +4,44 @@ Reasoning API Routes
 Provides RESTful endpoints for Nexus's reasoning system.
 """
 
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
 from typing import Dict, Any, Optional
 import logging
 
 from nexus.licensing import license_gate
-try:
-    from nexus.reasoning import (
-        MetaReasoner,
-        ChainOfThought,
-        PatternReasoner,
-        DynamicLearner,
-        ReasoningAnalytics,
-    )
-except ImportError:
-    MetaReasoner = None
-    ChainOfThought = None
-    PatternReasoner = None
-    DynamicLearner = None
-    ReasoningAnalytics = None
+from nexus.reasoning import (
+    MetaReasoner,
+    ChainOfThought,
+    PatternReasoner,
+    DynamicLearner,
+    ReasoningAnalytics,
+)
 
 logger = logging.getLogger(__name__)
 
 _GATE = "nxs.reasoning.advanced"
-_COMMERCIAL_MSG = "This feature requires a commercial license. Visit https://gozerai.com/pricing"
 
 reasoning_bp = Blueprint('reasoning', __name__, url_prefix='/api/v1/reasoning')
+
+
+@reasoning_bp.before_request
+def _require_auth():
+    """Require API key for all non-health endpoints."""
+    if request.endpoint and request.endpoint.endswith('.reasoning_health'):
+        return None
+    auth = getattr(current_app, 'auth_middleware', None)
+    if auth is None:
+        return None
+    api_key = request.headers.get("X-API-Key") or request.headers.get("Authorization")
+    if not api_key:
+        return jsonify({"error": "Missing API key", "message": "Provide API key in X-API-Key or Authorization header"}), 401
+    if api_key.startswith("Bearer "):
+        api_key = api_key[7:]
+    api_key_obj = auth.api_key_manager.validate_key(api_key)
+    if not api_key_obj:
+        return jsonify({"error": "Invalid API key", "message": "The provided API key is invalid or expired"}), 401
+    return None
+
 
 # Global reasoning instances (initialized by app)
 meta_reasoner: Optional[MetaReasoner] = None
@@ -43,10 +55,6 @@ def initialize_reasoning_system(config: Dict[str, Any]):
     """Initialize reasoning system components"""
     global meta_reasoner, chain_of_thought, pattern_reasoner
     global dynamic_learner, reasoning_analytics
-
-    if MetaReasoner is None:
-        logger.warning("Reasoning module not available (requires commercial license)")
-        return
 
     logger.info("Initializing Nexus reasoning system...")
 
@@ -66,9 +74,6 @@ def initialize_reasoning_system(config: Dict[str, Any]):
 def meta_reason():
     """Perform meta-reasoning for self-improvement"""
     try:
-        if MetaReasoner is None:
-            return jsonify({"status": "error", "message": _COMMERCIAL_MSG}), 403
-
         license_gate.gate(_GATE)
         data = request.json
 
@@ -91,16 +96,13 @@ def meta_reason():
         return jsonify({"status": "error", "message": str(e)}), 403
     except Exception as e:
         logger.error(f"Error in meta-reasoning: {e}")
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return jsonify({"status": "error", "message": "An internal error occurred"}), 500
 
 
 @reasoning_bp.route('/meta/improve', methods=['POST'])
 def meta_improve():
     """Use meta-reasoning to improve strategies"""
     try:
-        if MetaReasoner is None:
-            return jsonify({"status": "error", "message": _COMMERCIAL_MSG}), 403
-
         license_gate.gate(_GATE)
         data = request.json
 
@@ -121,7 +123,7 @@ def meta_improve():
         return jsonify({"status": "error", "message": str(e)}), 403
     except Exception as e:
         logger.error(f"Error in meta-improvement: {e}")
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return jsonify({"status": "error", "message": "An internal error occurred"}), 500
 
 
 # ===== Chain-of-Thought Endpoints =====
@@ -130,9 +132,6 @@ def meta_improve():
 def chain_of_thought_reasoning():
     """Perform chain-of-thought reasoning"""
     try:
-        if ChainOfThought is None:
-            return jsonify({"status": "error", "message": _COMMERCIAL_MSG}), 403
-
         license_gate.gate(_GATE)
         data = request.json
 
@@ -155,16 +154,13 @@ def chain_of_thought_reasoning():
         return jsonify({"status": "error", "message": str(e)}), 403
     except Exception as e:
         logger.error(f"Error in chain-of-thought: {e}")
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return jsonify({"status": "error", "message": "An internal error occurred"}), 500
 
 
 @reasoning_bp.route('/chain-of-thought/steps', methods=['GET'])
 def get_reasoning_steps():
     """Get reasoning steps for a completed chain-of-thought"""
     try:
-        if ChainOfThought is None:
-            return jsonify({"status": "error", "message": _COMMERCIAL_MSG}), 403
-
         license_gate.gate(_GATE)
         reasoning_id = request.args.get('id')
 
@@ -180,7 +176,7 @@ def get_reasoning_steps():
         return jsonify({"status": "error", "message": str(e)}), 403
     except Exception as e:
         logger.error(f"Error getting reasoning steps: {e}")
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return jsonify({"status": "error", "message": "An internal error occurred"}), 500
 
 
 # ===== Pattern-Based Reasoning Endpoints =====
@@ -189,9 +185,6 @@ def get_reasoning_steps():
 def pattern_based_reasoning():
     """Perform pattern-based reasoning"""
     try:
-        if PatternReasoner is None:
-            return jsonify({"status": "error", "message": _COMMERCIAL_MSG}), 403
-
         license_gate.gate(_GATE)
         data = request.json
 
@@ -214,16 +207,13 @@ def pattern_based_reasoning():
         return jsonify({"status": "error", "message": str(e)}), 403
     except Exception as e:
         logger.error(f"Error in pattern reasoning: {e}")
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return jsonify({"status": "error", "message": "An internal error occurred"}), 500
 
 
 @reasoning_bp.route('/patterns/discover', methods=['POST'])
 def discover_patterns():
     """Discover new reasoning patterns"""
     try:
-        if PatternReasoner is None:
-            return jsonify({"status": "error", "message": _COMMERCIAL_MSG}), 403
-
         license_gate.gate(_GATE)
         data = request.json
 
@@ -246,7 +236,7 @@ def discover_patterns():
         return jsonify({"status": "error", "message": str(e)}), 403
     except Exception as e:
         logger.error(f"Error discovering patterns: {e}")
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return jsonify({"status": "error", "message": "An internal error occurred"}), 500
 
 
 # ===== Dynamic Learning Endpoints =====
@@ -255,9 +245,6 @@ def discover_patterns():
 def dynamic_learn():
     """Perform dynamic adaptive learning"""
     try:
-        if DynamicLearner is None:
-            return jsonify({"status": "error", "message": _COMMERCIAL_MSG}), 403
-
         license_gate.gate(_GATE)
         data = request.json
 
@@ -280,16 +267,13 @@ def dynamic_learn():
         return jsonify({"status": "error", "message": str(e)}), 403
     except Exception as e:
         logger.error(f"Error in dynamic learning: {e}")
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return jsonify({"status": "error", "message": "An internal error occurred"}), 500
 
 
 @reasoning_bp.route('/learn/adapt', methods=['POST'])
 def adapt_behavior():
     """Adapt behavior based on performance"""
     try:
-        if DynamicLearner is None:
-            return jsonify({"status": "error", "message": _COMMERCIAL_MSG}), 403
-
         license_gate.gate(_GATE)
         data = request.json
 
@@ -309,7 +293,7 @@ def adapt_behavior():
         return jsonify({"status": "error", "message": str(e)}), 403
     except Exception as e:
         logger.error(f"Error adapting behavior: {e}")
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return jsonify({"status": "error", "message": "An internal error occurred"}), 500
 
 
 # ===== Analytics Endpoints =====
@@ -318,9 +302,6 @@ def adapt_behavior():
 def get_reasoning_analytics():
     """Get reasoning system analytics"""
     try:
-        if ReasoningAnalytics is None:
-            return jsonify({"status": "error", "message": _COMMERCIAL_MSG}), 403
-
         license_gate.gate(_GATE)
         analytics = reasoning_analytics.get_analytics()
 
@@ -333,16 +314,13 @@ def get_reasoning_analytics():
         return jsonify({"status": "error", "message": str(e)}), 403
     except Exception as e:
         logger.error(f"Error getting analytics: {e}")
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return jsonify({"status": "error", "message": "An internal error occurred"}), 500
 
 
 @reasoning_bp.route('/analytics/performance', methods=['GET'])
 def get_performance_metrics():
     """Get reasoning performance metrics"""
     try:
-        if ReasoningAnalytics is None:
-            return jsonify({"status": "error", "message": _COMMERCIAL_MSG}), 403
-
         license_gate.gate(_GATE)
         time_period = request.args.get('period', '24h')
         engine = request.args.get('engine')  # meta, cot, pattern, dynamic
@@ -361,7 +339,7 @@ def get_performance_metrics():
         return jsonify({"status": "error", "message": str(e)}), 403
     except Exception as e:
         logger.error(f"Error getting performance metrics: {e}")
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return jsonify({"status": "error", "message": "An internal error occurred"}), 500
 
 
 # ===== Self-Improvement Endpoints =====
@@ -370,9 +348,6 @@ def get_performance_metrics():
 def trigger_self_improvement():
     """Trigger self-improvement cycle"""
     try:
-        if MetaReasoner is None:
-            return jsonify({"status": "error", "message": _COMMERCIAL_MSG}), 403
-
         license_gate.gate(_GATE)
         data = request.json
 
@@ -390,7 +365,7 @@ def trigger_self_improvement():
         return jsonify({"status": "error", "message": str(e)}), 403
     except Exception as e:
         logger.error(f"Error in self-improvement: {e}")
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return jsonify({"status": "error", "message": "An internal error occurred"}), 500
 
 
 # ===== Health Check =====

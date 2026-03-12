@@ -8,6 +8,7 @@ from typing import Tuple, Any
 import logging
 from flask import Flask, request, jsonify, Response
 from nexus.core.core_engine import CognitiveCore
+from nexus.core.auth import AuthMiddleware
 from nexus.api.routes.memory import memory_bp, initialize_memory_system
 from nexus.api.routes.rag import rag_bp, initialize_rag_system
 from nexus.api.routes.reasoning import reasoning_bp, initialize_reasoning_system
@@ -22,12 +23,16 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 engine = CognitiveCore()
+auth_middleware = AuthMiddleware()
 
 # Register route blueprints
 app.register_blueprint(memory_bp)
 app.register_blueprint(rag_bp)
 app.register_blueprint(reasoning_bp)
 app.register_blueprint(data_bp)
+
+# Make auth_middleware available to blueprints
+app.auth_middleware = auth_middleware
 
 
 @app.route("/health", methods=["GET"])
@@ -98,7 +103,7 @@ def think() -> Tuple[Response, int]:
         logger.error(f"Error processing request: {str(e)}", exc_info=True)
         return jsonify({
             "error": "Internal server error",
-            "message": str(e)
+            "message": "An internal error occurred"
         }), 500
 
 

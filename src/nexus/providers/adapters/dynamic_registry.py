@@ -342,14 +342,87 @@ class DynamicModelRegistry:
         """
         Discover models from OpenAI API.
 
+        Fetches available models from https://api.openai.com/v1/models when
+        OPENAI_API_KEY is set. Filters to chat-capable models (gpt-*) and
+        registers them in the dynamic catalog.
+
         Returns:
             Number of models discovered
         """
-        # For now, we rely on static registry for OpenAI models
-        # In production, would fetch from https://api.openai.com/v1/models
-        # This requires API key and proper authentication
+        import os
 
-        return 0
+        api_key = os.environ.get("OPENAI_API_KEY")
+        if not api_key:
+            logger.debug("OPENAI_API_KEY not set, skipping OpenAI discovery")
+            return 0
+
+        url = "https://api.openai.com/v1/models"
+        headers = {
+            "Authorization": f"Bearer {api_key}",
+        }
+
+        async with aiohttp.ClientSession() as session:
+            try:
+                async with session.get(url, headers=headers, timeout=10) as response:
+                    if response.status != 200:
+                        logger.error(f"OpenAI API returned {response.status}")
+                        return 0
+
+                    data = await response.json()
+                    models_data = data.get("data", [])
+
+                    new_count = 0
+                    for model_data in models_data:
+                        model_id = model_data.get("id", "")
+
+                        # Only include chat-capable models (gpt-* and o1-*)
+                        if not (model_id.startswith("gpt-") or model_id.startswith("o1")):
+                            continue
+
+                        # Skip if already discovered
+                        if model_id in self._discovered_models:
+                            continue
+
+                        discovered = DiscoveredModel(
+                            id=model_id,
+                            name=model_id,
+                            provider="openai",
+                            display_name=model_id,
+                            # OpenAI /v1/models doesn't return context_length;
+                            # set reasonable defaults based on model name
+                            context_length=self._estimate_openai_context(model_id),
+                            supports_function_calling="gpt-4" in model_id or "gpt-3.5" in model_id,
+                        )
+
+                        self._discovered_models[model_id] = discovered
+                        self._performance_metrics[model_id] = ModelPerformanceMetrics(
+                            model_name=model_id
+                        )
+                        new_count += 1
+
+                    return new_count
+
+            except asyncio.TimeoutError:
+                logger.error("OpenAI API request timed out")
+                return 0
+            except Exception as e:
+                logger.error(f"Error fetching from OpenAI: {e}")
+                return 0
+
+    @staticmethod
+    def _estimate_openai_context(model_id: str) -> int:
+        """Estimate context window size from OpenAI model name."""
+        if "128k" in model_id or "gpt-4o" in model_id or model_id.startswith("o1"):
+            return 128_000
+        if "32k" in model_id:
+            return 32_768
+        if "16k" in model_id:
+            return 16_384
+        if "gpt-4" in model_id:
+            return 8_192
+        if "gpt-3.5" in model_id:
+            return 4_096
+        return 8_192  # safe default
 
     def _parse_pricing(self, price_str: Optional[str]) -> Optional[float]:
         """

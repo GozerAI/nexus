@@ -4,7 +4,7 @@ RAG API Routes
 Provides RESTful endpoints for Nexus's RAG system.
 """
 
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
 from typing import Dict, Any, Optional
 import logging
 
@@ -18,6 +18,26 @@ from nexus.rag import (
 logger = logging.getLogger(__name__)
 
 rag_bp = Blueprint('rag', __name__, url_prefix='/api/v1/rag')
+
+
+@rag_bp.before_request
+def _require_auth():
+    """Require API key for all non-health endpoints."""
+    if request.endpoint and request.endpoint.endswith('.rag_health'):
+        return None
+    auth = getattr(current_app, 'auth_middleware', None)
+    if auth is None:
+        return None
+    api_key = request.headers.get("X-API-Key") or request.headers.get("Authorization")
+    if not api_key:
+        return jsonify({"error": "Missing API key", "message": "Provide API key in X-API-Key or Authorization header"}), 401
+    if api_key.startswith("Bearer "):
+        api_key = api_key[7:]
+    api_key_obj = auth.api_key_manager.validate_key(api_key)
+    if not api_key_obj:
+        return jsonify({"error": "Invalid API key", "message": "The provided API key is invalid or expired"}), 401
+    return None
+
 
 # Global RAG instances (initialized by app)
 rag_engine: Optional[RAGVectorEngine] = None
@@ -94,7 +114,7 @@ def rag_query():
 
     except Exception as e:
         logger.error(f"Error in RAG query: {e}")
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return jsonify({"status": "error", "message": "An internal error occurred"}), 500
 
 
 @rag_bp.route('/embed', methods=['POST'])
@@ -117,7 +137,7 @@ def embed_text():
 
     except Exception as e:
         logger.error(f"Error generating embedding: {e}")
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return jsonify({"status": "error", "message": "An internal error occurred"}), 500
 
 
 @rag_bp.route('/add_documents', methods=['POST'])
@@ -144,7 +164,7 @@ def add_documents():
 
     except Exception as e:
         logger.error(f"Error adding documents: {e}")
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return jsonify({"status": "error", "message": "An internal error occurred"}), 500
 
 
 # ===== Context Management Endpoints =====
@@ -196,7 +216,7 @@ def manage_context():
 
     except Exception as e:
         logger.error(f"Error managing context: {e}")
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return jsonify({"status": "error", "message": "An internal error occurred"}), 500
 
 
 @rag_bp.route('/context/window', methods=['GET'])
@@ -216,7 +236,7 @@ def get_context_window_info():
 
     except Exception as e:
         logger.error(f"Error getting context window info: {e}")
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return jsonify({"status": "error", "message": "An internal error occurred"}), 500
 
 
 # ===== Adaptive RAG Endpoints =====
@@ -245,7 +265,7 @@ def adaptive_query():
 
     except Exception as e:
         logger.error(f"Error in adaptive query: {e}")
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return jsonify({"status": "error", "message": "An internal error occurred"}), 500
 
 
 @rag_bp.route('/adaptive/strategies', methods=['GET'])
@@ -261,7 +281,7 @@ def get_adaptive_strategies():
 
     except Exception as e:
         logger.error(f"Error getting strategies: {e}")
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return jsonify({"status": "error", "message": "An internal error occurred"}), 500
 
 
 # ===== Learning Pathways Endpoints =====
@@ -289,7 +309,7 @@ def optimize_pathway():
 
     except Exception as e:
         logger.error(f"Error optimizing pathway: {e}")
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return jsonify({"status": "error", "message": "An internal error occurred"}), 500
 
 
 @rag_bp.route('/pathways', methods=['GET'])
@@ -308,7 +328,7 @@ def get_pathways():
 
     except Exception as e:
         logger.error(f"Error getting pathways: {e}")
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return jsonify({"status": "error", "message": "An internal error occurred"}), 500
 
 
 # ===== Search Endpoints =====
@@ -338,7 +358,7 @@ def semantic_search():
 
     except Exception as e:
         logger.error(f"Error in semantic search: {e}")
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return jsonify({"status": "error", "message": "An internal error occurred"}), 500
 
 
 # ===== Analytics Endpoints =====
@@ -365,7 +385,7 @@ def get_rag_analytics():
 
     except Exception as e:
         logger.error(f"Error getting RAG analytics: {e}")
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return jsonify({"status": "error", "message": "An internal error occurred"}), 500
 
 
 # ===== Health Check =====

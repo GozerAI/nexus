@@ -83,6 +83,7 @@ config/*.local.yaml
 
 # Internal infrastructure (not for public distribution)
 infrastructure/helm/
+src/nexus/csuite/
 src/nexus/discovery/zuultimate_integration.py
 src/nexus/discovery/vinzy_integration.py
 

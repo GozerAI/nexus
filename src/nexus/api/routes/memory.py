@@ -4,7 +4,7 @@ Memory API Routes
 Provides RESTful endpoints for Nexus's memory system.
 """
 
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
 from typing import Dict, Any, Optional
 import logging
 
@@ -25,6 +25,27 @@ from nexus.memory import (
 logger = logging.getLogger(__name__)
 
 memory_bp = Blueprint('memory', __name__, url_prefix='/api/v1/memory')
+
+
+@memory_bp.before_request
+def _require_auth():
+    """Require API key for all non-health endpoints."""
+    if request.endpoint and request.endpoint.endswith('.memory_health'):
+        return None
+    auth = getattr(current_app, 'auth_middleware', None)
+    if auth is None:
+        return None
+    # Manually invoke the decorator logic
+    api_key = request.headers.get("X-API-Key") or request.headers.get("Authorization")
+    if not api_key:
+        return jsonify({"error": "Missing API key", "message": "Provide API key in X-API-Key or Authorization header"}), 401
+    if api_key.startswith("Bearer "):
+        api_key = api_key[7:]
+    api_key_obj = auth.api_key_manager.validate_key(api_key)
+    if not api_key_obj:
+        return jsonify({"error": "Invalid API key", "message": "The provided API key is invalid or expired"}), 401
+    return None
+
 
 # Global memory instances (initialized by app)
 knowledge_base: Optional[KnowledgeBase] = None
@@ -92,7 +113,7 @@ def add_knowledge():
 
     except Exception as e:
         logger.error(f"Error adding knowledge: {e}")
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return jsonify({"status": "error", "message": "An internal error occurred"}), 500
 
 
 @memory_bp.route('/knowledge/<knowledge_id>', methods=['GET'])
@@ -120,7 +141,7 @@ def get_knowledge(knowledge_id: str):
 
     except Exception as e:
         logger.error(f"Error retrieving knowledge: {e}")
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return jsonify({"status": "error", "message": "An internal error occurred"}), 500
 
 
 @memory_bp.route('/knowledge/search', methods=['POST'])
@@ -157,7 +178,7 @@ def search_knowledge():
 
     except Exception as e:
         logger.error(f"Error searching knowledge: {e}")
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return jsonify({"status": "error", "message": "An internal error occurred"}), 500
 
 
 # ===== Factual Memory Endpoints =====
@@ -184,7 +205,7 @@ def add_fact():
 
     except Exception as e:
         logger.error(f"Error adding fact: {e}")
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return jsonify({"status": "error", "message": "An internal error occurred"}), 500
 
 
 @memory_bp.route('/facts', methods=['GET'])
@@ -209,7 +230,7 @@ def get_facts():
 
     except Exception as e:
         logger.error(f"Error retrieving facts: {e}")
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return jsonify({"status": "error", "message": "An internal error occurred"}), 500
 
 
 # ===== Skill Memory Endpoints =====
@@ -236,7 +257,7 @@ def add_skill():
 
     except Exception as e:
         logger.error(f"Error adding skill: {e}")
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return jsonify({"status": "error", "message": "An internal error occurred"}), 500
 
 
 @memory_bp.route('/skills', methods=['GET'])
@@ -259,7 +280,7 @@ def get_skills():
 
     except Exception as e:
         logger.error(f"Error retrieving skills: {e}")
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return jsonify({"status": "error", "message": "An internal error occurred"}), 500
 
 
 # ===== Pattern Recognition Endpoints =====
@@ -284,7 +305,7 @@ def detect_patterns():
 
     except Exception as e:
         logger.error(f"Error detecting patterns: {e}")
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return jsonify({"status": "error", "message": "An internal error occurred"}), 500
 
 
 @memory_bp.route('/patterns', methods=['GET'])
@@ -307,7 +328,7 @@ def get_patterns():
 
     except Exception as e:
         logger.error(f"Error retrieving patterns: {e}")
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return jsonify({"status": "error", "message": "An internal error occurred"}), 500
 
 
 # ===== Knowledge Validation Endpoints =====
@@ -331,7 +352,7 @@ def validate_knowledge():
 
     except Exception as e:
         logger.error(f"Error validating knowledge: {e}")
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return jsonify({"status": "error", "message": "An internal error occurred"}), 500
 
 
 # ===== Knowledge Gap Endpoints =====
@@ -352,7 +373,7 @@ def get_knowledge_gaps():
 
     except Exception as e:
         logger.error(f"Error identifying gaps: {e}")
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return jsonify({"status": "error", "message": "An internal error occurred"}), 500
 
 
 @memory_bp.route('/gaps/curriculum', methods=['POST'])
@@ -373,7 +394,7 @@ def generate_curriculum():
 
     except Exception as e:
         logger.error(f"Error generating curriculum: {e}")
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return jsonify({"status": "error", "message": "An internal error occurred"}), 500
 
 
 # ===== Knowledge Expansion Endpoints =====
@@ -398,7 +419,7 @@ def expand_knowledge():
 
     except Exception as e:
         logger.error(f"Error expanding knowledge: {e}")
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return jsonify({"status": "error", "message": "An internal error occurred"}), 500
 
 
 # ===== Analytics Endpoints =====
@@ -416,7 +437,7 @@ def get_memory_analytics():
 
     except Exception as e:
         logger.error(f"Error retrieving analytics: {e}")
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return jsonify({"status": "error", "message": "An internal error occurred"}), 500
 
 
 @memory_bp.route('/analytics/usage', methods=['GET'])
@@ -434,7 +455,7 @@ def get_usage_analytics():
 
     except Exception as e:
         logger.error(f"Error retrieving usage analytics: {e}")
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return jsonify({"status": "error", "message": "An internal error occurred"}), 500
 
 
 # ===== Health Check =====
