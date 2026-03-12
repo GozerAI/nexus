@@ -1,0 +1,46 @@
+[project]
+name = "nexus-ai"
+version = "1.0.0"
+description = "Advanced AI Ensemble, Orchestrator & Consciousness Framework"
+authors = [
+  { name = "Christopher R. Arsenault", email = "chris@gozerai.com" }
+]
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+dependencies = [
+    "httpx>=0.24.0",
+    "pydantic>=2.0.0",
+    "aiosqlite>=0.19.0",
+    "python-dateutil>=2.8.0",
+    "pyyaml>=6.0.0",
+    "numpy>=1.24.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/chrisarseno/Nexus"
+
+[project.scripts]
+nexus-gui = "nexus.gui:run"
+
+[project.optional-dependencies]
+dev = ["pytest", "pytest-asyncio", "ruff", "mypy", "python-dotenv", "aiohttp", "flask", "tenacity", "prometheus-client", "PyPDF2", "sqlalchemy", "python-docx", "pandas", "datasets"]
+server = ["fastapi", "uvicorn[standard]", "pydantic", "requests"]
+mcp = ["mcp>=1.0.0"]
+embeddings = ["sentence-transformers>=2.2.0"]
+gui = ["PySide6>=6.5.0"]
+full = ["PySide6>=6.5.0", "sentence-transformers>=2.2.0"]
+# Redis vector search
+redis = ["redis>=5.0.0"]
+# Full with Redis
+full-redis = ["PySide6>=6.5.0", "sentence-transformers>=2.2.0", "redis>=5.0.0"]
+# ChromaDB requires onnxruntime - install separately if needed
+chroma = ["chromadb>=0.4.13"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"

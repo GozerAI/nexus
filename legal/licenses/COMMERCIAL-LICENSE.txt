@@ -1,0 +1,57 @@
+Commercial use of the Software is prohibited unless the Licensee has received an
+explicitly issued Commercial License ID from the Licensor. Downloading, forking,
+or accessing the Software does not grant any commercial rights.
+
+COMMERCIAL LICENSE AGREEMENT
+Version 1.0
+Copyright (C) 2025 Christopher R. Arsenault
+
+This Commercial License Agreement (“Agreement”) governs the use of the Software by any individual
+or entity (“Licensee”) for commercial purposes. By purchasing, obtaining, or using a commercial
+license, the Licensee agrees to the terms of this Agreement.
+
+1. DEFINITIONS
+“Software” refers to all source code, binaries, modules, models, documentation, or other assets
+provided by Chris Arsenault and identified as part of this project.
+
+“Commercial Use” means any use of the Software intended for revenue-generating activity, internal
+business operations, resale, SaaS hosting, proprietary integration, or deployment within a
+commercial product or workflow.
+
+2. GRANT OF LICENSE
+A valid Commercial License is granted only upon:
+    (a) explicit written approval by the Licensor,
+    (b) execution of a Commercial License Agreement signed by both parties,
+    (c) full payment of all applicable fees as invoiced by the Licensor, and
+    (d) issuance of a unique License ID or License Key by the Licensor.
+
+No commercial rights are granted until all four conditions above are met.
+Any commercial use of the Software without a valid License ID constitutes
+unauthorized use.
+
+The Licensee bears the burden of proving the existence of a valid commercial
+license. Verbal agreements, informal statements, unsigned documents, or payment without written
+acceptance do not constitute a license. No implied licenses are granted.
+
+Any misrepresentation regarding the existence or scope of a commercial license
+immediately voids all rights and terminates any license that may have been granted.
+The Licensor may pursue damages for unauthorized commercial use.
+
+3. RESTRICTIONS
+Under this Agreement, Licensee may NOT:
+    a. Re-license or sell the Software itself
+    b. Publish the source code of the Software
+    c. Release a competing open-source version
+    d. Claim authorship or remove copyright or attribution
+
+4. NO WARRANTY
+The Software is provided “AS IS” without warranty of any kind. Licensor shall not be liable for any
+damages arising from use or misuse of the Software under any legal theory.
+
+5. TERMINATION
+Licensor may terminate this license if Licensee violates any term of this Agreement. Upon
+termination, Licensee must immediately cease all use of the Software.
+
+6. CONTACT
+Commercial licensing inquiries may be directed to:
+chris@gozerai.com
