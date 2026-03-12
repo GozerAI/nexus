@@ -18,7 +18,7 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/chrisarseno/Nexus"
+Homepage = "https://github.com/GozerAI/nexus"
 
 [project.scripts]
 nexus-gui = "nexus.gui:run"

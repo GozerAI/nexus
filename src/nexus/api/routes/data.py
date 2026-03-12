@@ -9,29 +9,41 @@ from typing import Dict, Any, Optional
 import logging
 
 from nexus.licensing import license_gate
-from nexus.data import (
-    DataIngestion,
-    AutoDataProcessor,
-    InternetRetriever,
-    HuggingFaceLoader,
-)
+
+try:
+    from nexus.data import (
+        DataIngestion,
+        AutoDataProcessor,
+        InternetRetriever,
+        HuggingFaceLoader,
+    )
+except ImportError:
+    DataIngestion = None
+    AutoDataProcessor = None
+    InternetRetriever = None
+    HuggingFaceLoader = None
 
 logger = logging.getLogger(__name__)
 
 _GATE = "nxs.discovery.intelligence"
+_COMMERCIAL_MSG = "This feature requires a commercial license. Visit https://gozerai.com/pricing"
 
 data_bp = Blueprint('data', __name__, url_prefix='/api/v1/data')
 
 # Global data instances (initialized by app)
-data_ingestion: Optional[DataIngestion] = None
-auto_processor: Optional[AutoDataProcessor] = None
-internet_retriever: Optional[InternetRetriever] = None
-huggingface_loader: Optional[HuggingFaceLoader] = None
+data_ingestion: Optional["DataIngestion"] = None
+auto_processor: Optional["AutoDataProcessor"] = None
+internet_retriever: Optional["InternetRetriever"] = None
+huggingface_loader: Optional["HuggingFaceLoader"] = None
 
 
 def initialize_data_system(config: Dict[str, Any]):
     """Initialize data system components"""
     global data_ingestion, auto_processor, internet_retriever, huggingface_loader
+
+    if DataIngestion is None:
+        logger.warning("Data module not available (requires commercial license)")
+        return
 
     logger.info("Initializing Nexus data system...")
 
@@ -49,6 +61,9 @@ def initialize_data_system(config: Dict[str, Any]):
 def ingest_data():
     """Ingest data from various formats"""
     try:
+        if DataIngestion is None:
+            return jsonify({"status": "error", "message": _COMMERCIAL_MSG}), 403
+
         license_gate.gate(_GATE)
         data = request.json
 
@@ -80,6 +95,9 @@ def ingest_data():
 def process_data():
     """Automatically process ingested data"""
     try:
+        if AutoDataProcessor is None:
+            return jsonify({"status": "error", "message": _COMMERCIAL_MSG}), 403
+
         license_gate.gate(_GATE)
         data = request.json
 
@@ -110,6 +128,9 @@ def process_data():
 def retrieve_from_internet():
     """Retrieve data from the internet"""
     try:
+        if InternetRetriever is None:
+            return jsonify({"status": "error", "message": _COMMERCIAL_MSG}), 403
+
         license_gate.gate(_GATE)
         data = request.json
 
@@ -142,6 +163,9 @@ def retrieve_from_internet():
 def load_huggingface_dataset():
     """Load dataset from HuggingFace"""
     try:
+        if HuggingFaceLoader is None:
+            return jsonify({"status": "error", "message": _COMMERCIAL_MSG}), 403
+
         license_gate.gate(_GATE)
         data = request.json
 

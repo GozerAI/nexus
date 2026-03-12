@@ -6,13 +6,31 @@ import asyncio
 from typing import List, Dict, Any, Optional, Type
 from dataclasses import dataclass, field
 
-from nexus.experts.base import Task, TaskType, BaseExpert, ExpertOpinion
-from nexus.experts.personas import (
-    ResearchExpert, AnalystExpert, WriterExpert,
-    EngineerExpert, CriticExpert, StrategistExpert,
-    ALL_PERSONAS
-)
-from nexus.experts.consensus import ConsensusEngine, ConsensusResult, ConsensusStrategy
+try:
+    from nexus.experts.base import Task, TaskType, BaseExpert, ExpertOpinion
+    from nexus.experts.personas import (
+        ResearchExpert, AnalystExpert, WriterExpert,
+        EngineerExpert, CriticExpert, StrategistExpert,
+        ALL_PERSONAS
+    )
+    from nexus.experts.consensus import ConsensusEngine, ConsensusResult, ConsensusStrategy
+    _HAS_EXPERTS = True
+except ImportError:
+    Task = None
+    TaskType = None
+    BaseExpert = None
+    ExpertOpinion = None
+    ResearchExpert = None
+    AnalystExpert = None
+    WriterExpert = None
+    EngineerExpert = None
+    CriticExpert = None
+    StrategistExpert = None
+    ALL_PERSONAS = None
+    ConsensusEngine = None
+    ConsensusResult = None
+    ConsensusStrategy = None
+    _HAS_EXPERTS = False
 from .types import AutonomyLevel, TaskCategory
 
 

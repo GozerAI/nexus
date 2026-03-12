@@ -349,7 +349,6 @@ class DynamicModelRegistry:
         # In production, would fetch from https://api.openai.com/v1/models
         # This requires API key and proper authentication
 
-        # TODO: Implement when OpenAI API key is available
         return 0
 
     def _parse_pricing(self, price_str: Optional[str]) -> Optional[float]:

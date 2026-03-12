@@ -9,17 +9,25 @@ from typing import Dict, Any, Optional
 import logging
 
 from nexus.licensing import license_gate
-from nexus.reasoning import (
-    MetaReasoner,
-    ChainOfThought,
-    PatternReasoner,
-    DynamicLearner,
-    ReasoningAnalytics,
-)
+try:
+    from nexus.reasoning import (
+        MetaReasoner,
+        ChainOfThought,
+        PatternReasoner,
+        DynamicLearner,
+        ReasoningAnalytics,
+    )
+except ImportError:
+    MetaReasoner = None
+    ChainOfThought = None
+    PatternReasoner = None
+    DynamicLearner = None
+    ReasoningAnalytics = None
 
 logger = logging.getLogger(__name__)
 
 _GATE = "nxs.reasoning.advanced"
+_COMMERCIAL_MSG = "This feature requires a commercial license. Visit https://gozerai.com/pricing"
 
 reasoning_bp = Blueprint('reasoning', __name__, url_prefix='/api/v1/reasoning')
 
@@ -35,6 +43,10 @@ def initialize_reasoning_system(config: Dict[str, Any]):
     """Initialize reasoning system components"""
     global meta_reasoner, chain_of_thought, pattern_reasoner
     global dynamic_learner, reasoning_analytics
+
+    if MetaReasoner is None:
+        logger.warning("Reasoning module not available (requires commercial license)")
+        return
 
     logger.info("Initializing Nexus reasoning system...")
 
@@ -54,6 +66,9 @@ def initialize_reasoning_system(config: Dict[str, Any]):
 def meta_reason():
     """Perform meta-reasoning for self-improvement"""
     try:
+        if MetaReasoner is None:
+            return jsonify({"status": "error", "message": _COMMERCIAL_MSG}), 403
+
         license_gate.gate(_GATE)
         data = request.json
 
@@ -83,6 +98,9 @@ def meta_reason():
 def meta_improve():
     """Use meta-reasoning to improve strategies"""
     try:
+        if MetaReasoner is None:
+            return jsonify({"status": "error", "message": _COMMERCIAL_MSG}), 403
+
         license_gate.gate(_GATE)
         data = request.json
 
@@ -112,6 +130,9 @@ def meta_improve():
 def chain_of_thought_reasoning():
     """Perform chain-of-thought reasoning"""
     try:
+        if ChainOfThought is None:
+            return jsonify({"status": "error", "message": _COMMERCIAL_MSG}), 403
+
         license_gate.gate(_GATE)
         data = request.json
 
@@ -141,6 +162,9 @@ def chain_of_thought_reasoning():
 def get_reasoning_steps():
     """Get reasoning steps for a completed chain-of-thought"""
     try:
+        if ChainOfThought is None:
+            return jsonify({"status": "error", "message": _COMMERCIAL_MSG}), 403
+
         license_gate.gate(_GATE)
         reasoning_id = request.args.get('id')
 
@@ -165,6 +189,9 @@ def get_reasoning_steps():
 def pattern_based_reasoning():
     """Perform pattern-based reasoning"""
     try:
+        if PatternReasoner is None:
+            return jsonify({"status": "error", "message": _COMMERCIAL_MSG}), 403
+
         license_gate.gate(_GATE)
         data = request.json
 
@@ -194,6 +221,9 @@ def pattern_based_reasoning():
 def discover_patterns():
     """Discover new reasoning patterns"""
     try:
+        if PatternReasoner is None:
+            return jsonify({"status": "error", "message": _COMMERCIAL_MSG}), 403
+
         license_gate.gate(_GATE)
         data = request.json
 
@@ -225,6 +255,9 @@ def discover_patterns():
 def dynamic_learn():
     """Perform dynamic adaptive learning"""
     try:
+        if DynamicLearner is None:
+            return jsonify({"status": "error", "message": _COMMERCIAL_MSG}), 403
+
         license_gate.gate(_GATE)
         data = request.json
 
@@ -254,6 +287,9 @@ def dynamic_learn():
 def adapt_behavior():
     """Adapt behavior based on performance"""
     try:
+        if DynamicLearner is None:
+            return jsonify({"status": "error", "message": _COMMERCIAL_MSG}), 403
+
         license_gate.gate(_GATE)
         data = request.json
 
@@ -282,6 +318,9 @@ def adapt_behavior():
 def get_reasoning_analytics():
     """Get reasoning system analytics"""
     try:
+        if ReasoningAnalytics is None:
+            return jsonify({"status": "error", "message": _COMMERCIAL_MSG}), 403
+
         license_gate.gate(_GATE)
         analytics = reasoning_analytics.get_analytics()
 
@@ -301,6 +340,9 @@ def get_reasoning_analytics():
 def get_performance_metrics():
     """Get reasoning performance metrics"""
     try:
+        if ReasoningAnalytics is None:
+            return jsonify({"status": "error", "message": _COMMERCIAL_MSG}), 403
+
         license_gate.gate(_GATE)
         time_period = request.args.get('period', '24h')
         engine = request.args.get('engine')  # meta, cot, pattern, dynamic
@@ -328,6 +370,9 @@ def get_performance_metrics():
 def trigger_self_improvement():
     """Trigger self-improvement cycle"""
     try:
+        if MetaReasoner is None:
+            return jsonify({"status": "error", "message": _COMMERCIAL_MSG}), 403
+
         license_gate.gate(_GATE)
         data = request.json
 

@@ -54,7 +54,7 @@ COPY --chown=nexus:nexus src/ ./src/
 COPY --chown=nexus:nexus config/ ./config/
 
 # Nexus package lives at src/nexus/src/nexus/ — include both paths so
-# cross-service imports (csuite, forge, sentinel) also resolve.
+# cross-service imports also resolve.
 ENV PYTHONPATH=/app/src/nexus/src:/app/src
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1

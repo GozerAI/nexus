@@ -176,7 +176,7 @@ Nexus follows [Semantic Versioning](https://semver.org/):
 
 ## Links
 
-- [GitHub Repository](https://github.com/chrisarseno/Nexus)
-- [Documentation](https://github.com/chrisarseno/Nexus/tree/main/docs)
-- [Issue Tracker](https://github.com/chrisarseno/Nexus/issues)
-- [Nexus-Agents](https://github.com/chrisarseno/Nexus-Agents)
+- [GitHub Repository](https://github.com/GozerAI/nexus)
+- [Documentation](https://github.com/GozerAI/nexus/tree/main/docs)
+- [Issue Tracker](https://github.com/GozerAI/nexus/issues)
+- [Nexus-Agents](https://github.com/GozerAI/nexus-Agents)
