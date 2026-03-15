@@ -78,7 +78,7 @@ Nexus should be read as infrastructure, not the boardroom:
 
 ```bash
 # Clone the repository
-git clone https://github.com/chrisarseno/Nexus.git
+git clone https://github.com/GozerAI/nexus.git
 cd Nexus
 
 # Install dependencies
@@ -237,7 +237,7 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 
 ```bash
 # Clone repo
-git clone https://github.com/chrisarseno/Nexus.git
+git clone https://github.com/GozerAI/nexus.git
 cd Nexus
 
 # Install dev dependencies
@@ -263,7 +263,7 @@ If you use Nexus in your research, please cite:
   title = {Nexus: Advanced AI Ensemble, Orchestrator \& Consciousness Framework},
   author = {Arsenault, Christopher R.},
   year = {2025},
-  url = {https://github.com/chrisarseno/Nexus}
+  url = {https://github.com/GozerAI/nexus}
 }
 ```
 
@@ -271,8 +271,8 @@ If you use Nexus in your research, please cite:
 
 ## Community
 
-- **Issues**: [GitHub Issues](https://github.com/chrisarseno/Nexus/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/chrisarseno/Nexus/discussions)
+- **Issues**: [GitHub Issues](https://github.com/GozerAI/nexus/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/GozerAI/nexus/discussions)
 - **Email**: chris@gozerai.com
 
 ---

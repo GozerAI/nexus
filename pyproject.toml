@@ -27,7 +27,7 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/chrisarseno/Nexus"
+Homepage = "https://github.com/GozerAI/nexus"
 
 [project.scripts]
 nexus-cli = "nexus.cli.main:cli"
@@ -48,7 +48,7 @@ redis = ["redis>=5.0.0"]
 full-redis = ["PySide6>=6.5.0", "sentence-transformers>=2.2.0", "redis>=5.0.0"]
 # ChromaDB requires onnxruntime - install separately if needed
 chroma = ["chromadb>=0.4.13"]
-telemetry = ["gozerai-telemetry @ git+https://github.com/chrisarseno/gozerai-telemetry.git"]
+telemetry = ["gozerai-telemetry @ git+https://github.com/GozerAI/gozerai-telemetry.git"]
 
 [tool.ruff]
 line-length = 88
