@@ -83,10 +83,9 @@ def redis_client():
 @pytest.fixture(scope="function")
 def flask_app():
     """Create Flask app for testing."""
-    from nexus.api.api import app
+    from nexus.api.api import create_app
 
-    app.config["TESTING"] = True
-    app.config["SECRET_KEY"] = "test-secret-key"
+    app = create_app({"TESTING": True, "SECRET_KEY": "test-secret-key"})
 
     with app.app_context():
         yield app

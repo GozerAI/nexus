@@ -1,1 +1,1 @@
-"""Interface modules for TheNexus (CLI and API)."""
+"""Interface modules for Nexus (CLI and API)."""

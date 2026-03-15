@@ -11,6 +11,22 @@ from sqlalchemy.pool import StaticPool
 
 logger = logging.getLogger(__name__)
 
+DEFAULT_DB_PATH = "data/nexus.db"
+LEGACY_DEFAULT_DB_PATH = "data/thenexus.db"
+
+
+def resolve_default_db_path() -> str:
+    """Return the default database path with legacy compatibility."""
+    configured = os.environ.get("DATABASE_PATH")
+    if configured:
+        return configured
+
+    if Path(DEFAULT_DB_PATH).exists():
+        return DEFAULT_DB_PATH
+    if Path(LEGACY_DEFAULT_DB_PATH).exists():
+        return LEGACY_DEFAULT_DB_PATH
+    return DEFAULT_DB_PATH
+
 
 class DatabaseConnection:
     """
@@ -19,7 +35,7 @@ class DatabaseConnection:
     Uses SQLite with Write-Ahead Logging (WAL) for better concurrency.
     """
 
-    def __init__(self, db_path: str = "data/thenexus.db", echo: bool = False):
+    def __init__(self, db_path: str | None = None, echo: bool = False):
         """
         Initialize database connection.
 
@@ -27,18 +43,18 @@ class DatabaseConnection:
             db_path: Path to SQLite database file
             echo: If True, log all SQL statements
         """
-        self.db_path = db_path
+        self.db_path = db_path or resolve_default_db_path()
 
         # Ensure data directory exists
-        db_dir = Path(db_path).parent
+        db_dir = Path(self.db_path).parent
         db_dir.mkdir(parents=True, exist_ok=True)
 
         # Create engine
         # Use check_same_thread=False for Flask compatibility
-        if db_path == ":memory:":
+        if self.db_path == ":memory:":
             # In-memory database for testing
             self.engine = create_engine(
-                f"sqlite:///{db_path}",
+                f"sqlite:///{self.db_path}",
                 echo=echo,
                 connect_args={"check_same_thread": False},
                 poolclass=StaticPool,
@@ -46,7 +62,7 @@ class DatabaseConnection:
         else:
             # File-based database
             self.engine = create_engine(
-                f"sqlite:///{db_path}",
+                f"sqlite:///{self.db_path}",
                 echo=echo,
                 connect_args={"check_same_thread": False},
             )
@@ -67,7 +83,7 @@ class DatabaseConnection:
             bind=self.engine
         )
 
-        logger.info(f"Database connection initialized: {db_path}")
+        logger.info("Database connection initialized: %s", self.db_path)
 
     def create_tables(self):
         """Create all database tables."""
@@ -89,7 +105,7 @@ class DatabaseConnection:
 _db: DatabaseConnection = None
 
 
-def init_db(db_path: str = "data/thenexus.db", echo: bool = False) -> DatabaseConnection:
+def init_db(db_path: str | None = None, echo: bool = False) -> DatabaseConnection:
     """
     Initialize the global database connection.
 

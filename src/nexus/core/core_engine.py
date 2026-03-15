@@ -1,5 +1,5 @@
 """
-Core cognitive engine for TheNexus AI system.
+Core cognitive engine for the Nexus AI system.
 
 Implements the main reasoning architecture with symbolic processing,
 holographic memory, and conceptual mapping capabilities.

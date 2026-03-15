@@ -1,96 +1,75 @@
-"""
-Command-line interface for TheNexus cognitive engine.
+"""Compatibility wrapper for the maintained Nexus CLI."""
 
-Provides an interactive way to query the AI reasoning system.
-"""
+from __future__ import annotations
 
-from typing import NoReturn
-import argparse
-import logging
+from collections.abc import Sequence
 import sys
-from thenexus.core_engine import CognitiveCore
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger(__name__)
+import click
+
+from nexus.cli.main import cli as unified_cli
 
 
-def main() -> None:
-    """Main CLI entry point."""
-    parser = argparse.ArgumentParser(
-        description="Interact with TheNexus SuperAI Core",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Examples:
-  %(prog)s --query "What is the nature of consciousness?"
-  %(prog)s --query "Explain quantum entanglement"
-        """
-    )
-    parser.add_argument(
-        "--query",
-        type=str,
-        required=True,
-        help="Input query to process through the cognitive engine"
-    )
-    parser.add_argument(
-        "--verbose",
-        action="store_true",
-        help="Enable verbose logging"
-    )
+def _translate_legacy_args(argv: Sequence[str]) -> list[str]:
+    """Map the historical ``nexus.api.cli`` flags to the unified CLI."""
+    args = list(argv)
+    translated: list[str] = []
 
-    args = parser.parse_args()
+    if "--verbose" in args:
+        translated.append("--verbose")
+        args = [arg for arg in args if arg != "--verbose"]
 
-    # Set logging level based on verbose flag
-    if args.verbose:
-        logging.getLogger().setLevel(logging.DEBUG)
-        logger.debug("Verbose mode enabled")
+    if "--status" in args:
+        args = [arg for arg in args if arg != "--status"]
+        return translated + ["status", *args]
 
-    # Validate query is not None or empty
-    if not args.query:
-        logger.error("Query cannot be empty")
-        print("Error: Query cannot be empty", file=sys.stderr)
-        sys.exit(1)
+    model: str | None = None
+    if "--model" in args:
+        index = args.index("--model")
+        if index + 1 >= len(args):
+            raise click.ClickException("Option '--model' requires an argument.")
+        model = args[index + 1]
+        del args[index:index + 2]
 
-    # Validate query length
-    if len(args.query) > 10000:
-        logger.error(f"Query too long: {len(args.query)} characters")
-        print(
-            f"Error: Query exceeds maximum length of 10000 characters",
-            file=sys.stderr
-        )
-        sys.exit(1)
+    query: str | None = None
+    for index, arg in enumerate(args):
+        if arg.startswith("--query="):
+            query = arg.split("=", 1)[1]
+            del args[index]
+            break
+        if arg == "--query":
+            if index + 1 >= len(args):
+                raise click.ClickException("Option '--query' requires an argument.")
+            query = args[index + 1]
+            del args[index:index + 2]
+            break
 
+    if query is not None:
+        translated.extend(["query", query])
+        if model:
+            translated.extend(["--model", model])
+        translated.extend(args)
+        return translated
+
+    if model:
+        translated.extend(["--model", model])
+    translated.extend(args)
+    return translated
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    """Run the maintained CLI through the legacy entrypoint."""
     try:
-        logger.info(f"Processing query: {args.query[:50]}...")
+        command_args = _translate_legacy_args(argv if argv is not None else sys.argv[1:])
+        unified_cli.main(args=command_args, prog_name="nexus-cli", standalone_mode=False)
+    except click.ClickException as exc:
+        exc.show()
+        return exc.exit_code
+    except click.exceptions.Exit as exc:
+        return int(exc.exit_code or 0)
 
-        # Initialize cognitive engine
-        engine = CognitiveCore()
-
-        # Process query
-        result = engine.think(args.query)
-
-        # Output result
-        print(f"\nAI Response: {result}")
-
-        logger.info("Query processed successfully")
-
-    except FileNotFoundError as e:
-        logger.error(f"Configuration file not found: {e}")
-        print(
-            f"Error: Configuration file not found. "
-            f"Please ensure config.yaml exists.",
-            file=sys.stderr
-        )
-        sys.exit(1)
-
-    except Exception as e:
-        logger.error(f"Error processing query: {str(e)}", exc_info=True)
-        print(f"Error: {str(e)}", file=sys.stderr)
-        sys.exit(1)
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

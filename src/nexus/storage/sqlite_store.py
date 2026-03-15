@@ -1,10 +1,33 @@
 """SQLite storage for structured data."""
 
+import re
 import aiosqlite
 from typing import Optional, List, Dict, Any
 from pathlib import Path
 
 from nexus.core.exceptions import StorageError
+
+# Whitelist of valid table names (must match _run_migrations schema)
+ALLOWED_TABLES = {
+    "tasks", "goals", "milestones", "decisions", "corrections",
+    "preferences", "sessions", "blockers", "task_notes", "task_files",
+    "entities", "entity_relations", "facts", "conversations",
+}
+
+# Column name validation: alphanumeric + underscore, must start with letter/underscore
+_IDENTIFIER_RE = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
+
+
+def _validate_table(table: str) -> None:
+    """Validate table name against whitelist."""
+    if table not in ALLOWED_TABLES:
+        raise ValueError(f"Invalid table: {table}")
+
+
+def _validate_identifier(name: str) -> None:
+    """Validate a column or order_by identifier."""
+    if not _IDENTIFIER_RE.match(name):
+        raise ValueError(f"Invalid identifier: {name}")
 
 
 class SQLiteStore:
@@ -202,6 +225,9 @@ class SQLiteStore:
 
     async def insert(self, table: str, data: Dict[str, Any]) -> str:
         """Insert row."""
+        _validate_table(table)
+        for key in data.keys():
+            _validate_identifier(key)
         columns = ", ".join(data.keys())
         placeholders = ", ".join(["?" for _ in data])
         query = f"INSERT INTO {table} ({columns}) VALUES ({placeholders})"
@@ -211,6 +237,9 @@ class SQLiteStore:
 
     async def update(self, table: str, id: str, data: Dict[str, Any]):
         """Update row."""
+        _validate_table(table)
+        for key in data.keys():
+            _validate_identifier(key)
         set_clause = ", ".join([f"{k} = ?" for k in data.keys()])
         query = f"UPDATE {table} SET {set_clause}, updated_at = CURRENT_TIMESTAMP WHERE id = ?"
         await self._connection.execute(query, list(data.values()) + [id])
@@ -218,27 +247,40 @@ class SQLiteStore:
 
     async def get(self, table: str, id: str) -> Optional[Dict[str, Any]]:
         """Get row by ID."""
+        _validate_table(table)
         async with self._connection.execute(f"SELECT * FROM {table} WHERE id = ?", [id]) as cursor:
             row = await cursor.fetchone()
             return dict(row) if row else None
 
     async def delete(self, table: str, id: str):
         """Delete row."""
+        _validate_table(table)
         await self._connection.execute(f"DELETE FROM {table} WHERE id = ?", [id])
         await self._connection.commit()
 
     async def query(self, table: str, where: Optional[Dict] = None,
                    order_by: Optional[str] = None, limit: Optional[int] = None) -> List[Dict]:
         """Query rows."""
+        _validate_table(table)
         query = f"SELECT * FROM {table}"
         values = []
 
         if where:
+            for k in where.keys():
+                _validate_identifier(k)
             conditions = [f"{k} = ?" for k in where.keys()]
             query += " WHERE " + " AND ".join(conditions)
             values = list(where.values())
 
         if order_by:
+            # Parse order_by: allow "col", "col ASC", "col DESC"
+            parts = order_by.strip().split()
+            if len(parts) == 1:
+                _validate_identifier(parts[0])
+            elif len(parts) == 2 and parts[1].upper() in ("ASC", "DESC"):
+                _validate_identifier(parts[0])
+            else:
+                raise ValueError(f"Invalid order_by: {order_by}")
             query += f" ORDER BY {order_by}"
         if limit:
             query += f" LIMIT {limit}"
@@ -249,9 +291,12 @@ class SQLiteStore:
 
     async def count(self, table: str, where: Optional[Dict] = None) -> int:
         """Count rows."""
+        _validate_table(table)
         query = f"SELECT COUNT(*) as count FROM {table}"
         values = []
         if where:
+            for k in where.keys():
+                _validate_identifier(k)
             conditions = [f"{k} = ?" for k in where.keys()]
             query += " WHERE " + " AND ".join(conditions)
             values = list(where.values())

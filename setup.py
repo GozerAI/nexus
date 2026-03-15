@@ -35,8 +35,10 @@ setup(
     install_requires=requirements,
     entry_points={
         "console_scripts": [
-            "nexus-cli=nexus.api.cli:main",
+            "nexus-cli=nexus.cli.main:cli",
+            "nexus-chat=nexus.cli.chat:main",
             "nexus-api=nexus.api.api:main",
+            "nexus-gui=nexus.gui:run",
         ],
     },
 )

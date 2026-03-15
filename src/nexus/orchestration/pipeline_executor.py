@@ -131,27 +131,27 @@ class PipelineExecutor:
                     errors.append("Dependency deadlock detected")
                     break
             
-            # Execute runnable steps
-            for step in runnable:
-                try:
-                    result = await self._execute_step(step, pipeline_id)
-                    
-                    if result.get("requires_approval"):
-                        step.status = StepStatus.AWAITING_APPROVAL
-                        # Create approval request
-                        approval = self._create_approval_request(step, pipeline_id, result)
-                        self._pipelines[pipeline_id]["approval_requests"].append(approval)
-                        await self._notify_approval_needed(approval)
-                    else:
-                        step.status = StepStatus.COMPLETED
-                        step.outputs = result.get("outputs", {})
-                        self._pipelines[pipeline_id]["outputs"][step.id] = step.outputs
-                        completed += 1
-                        
-                except Exception as e:
+            # Execute runnable steps concurrently
+            results = await asyncio.gather(
+                *[self._execute_step(step, pipeline_id) for step in runnable],
+                return_exceptions=True,
+            )
+
+            for step, result in zip(runnable, results):
+                if isinstance(result, Exception):
                     step.status = StepStatus.FAILED
-                    errors.append(f"Step {step.id} failed: {str(e)}")
-                
+                    errors.append(f"Step {step.id} failed: {str(result)}")
+                elif result.get("requires_approval"):
+                    step.status = StepStatus.AWAITING_APPROVAL
+                    approval = self._create_approval_request(step, pipeline_id, result)
+                    self._pipelines[pipeline_id]["approval_requests"].append(approval)
+                    await self._notify_approval_needed(approval)
+                else:
+                    step.status = StepStatus.COMPLETED
+                    step.outputs = result.get("outputs", {})
+                    self._pipelines[pipeline_id]["outputs"][step.id] = step.outputs
+                    completed += 1
+
                 pending.remove(step)
         
         duration = (datetime.now() - start_time).total_seconds()

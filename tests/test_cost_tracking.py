@@ -79,6 +79,19 @@ class TestCostSummary:
         assert summary.cost_by_provider == {}
         assert summary.cost_by_user == {}
 
+    def test_cost_summary_period_fields(self):
+        """Test cost summary period start/end fields."""
+        now = datetime.now(timezone.utc)
+        summary = CostSummary(period_start=now - timedelta(days=30), period_end=now)
+        assert summary.period_start is not None
+        assert summary.period_end is not None
+
+    def test_cost_summary_period_defaults_none(self):
+        """Test cost summary period defaults to None."""
+        summary = CostSummary()
+        assert summary.period_start is None
+        assert summary.period_end is None
+
 
 class TestCostTracker:
     """Tests for CostTracker."""
@@ -413,3 +426,163 @@ class TestCostTracker:
 
         assert status["budget_limit"] == 0.0
         assert status["percent_used"] == 0  # Should handle division by zero
+
+
+# ---------------------------------------------------------------------------
+# Cost by Provider
+# ---------------------------------------------------------------------------
+
+class TestCostByProvider:
+    """Tests for cost aggregation by provider."""
+
+    def test_single_provider(self):
+        tracker = CostTracker()
+        tracker.record_cost("gpt-4", "openai", 1000, 0.03)
+        tracker.record_cost("gpt-3.5", "openai", 500, 0.01)
+        summary = tracker.get_summary()
+        assert summary.cost_by_provider["openai"] == pytest.approx(0.04)
+
+    def test_multiple_providers(self):
+        tracker = CostTracker()
+        tracker.record_cost("gpt-4", "openai", 1000, 0.03)
+        tracker.record_cost("claude-3", "anthropic", 800, 0.02)
+        tracker.record_cost("llama", "local", 500, 0.0)
+        summary = tracker.get_summary()
+        assert len(summary.cost_by_provider) == 3
+        assert summary.cost_by_provider["openai"] == pytest.approx(0.03)
+        assert summary.cost_by_provider["anthropic"] == pytest.approx(0.02)
+        assert summary.cost_by_provider["local"] == pytest.approx(0.0)
+
+
+# ---------------------------------------------------------------------------
+# Cost by Model
+# ---------------------------------------------------------------------------
+
+class TestCostByModel:
+    """Tests for cost aggregation by model."""
+
+    def test_single_model(self):
+        tracker = CostTracker()
+        tracker.record_cost("gpt-4", "openai", 1000, 0.03)
+        tracker.record_cost("gpt-4", "openai", 2000, 0.06)
+        summary = tracker.get_summary()
+        assert summary.cost_by_model["gpt-4"] == pytest.approx(0.09)
+
+    def test_multiple_models_same_provider(self):
+        tracker = CostTracker()
+        tracker.record_cost("gpt-4", "openai", 1000, 0.03)
+        tracker.record_cost("gpt-3.5-turbo", "openai", 2000, 0.002)
+        summary = tracker.get_summary()
+        assert len(summary.cost_by_model) == 2
+        assert "gpt-4" in summary.cost_by_model
+        assert "gpt-3.5-turbo" in summary.cost_by_model
+
+
+# ---------------------------------------------------------------------------
+# Cost Over Time Period
+# ---------------------------------------------------------------------------
+
+class TestCostOverTimePeriod:
+    """Tests for cost filtering by time period."""
+
+    def test_future_start_date_returns_empty(self):
+        tracker = CostTracker()
+        tracker.record_cost("gpt-4", "openai", 1000, 0.03)
+        future = datetime.now(timezone.utc) + timedelta(days=1)
+        summary = tracker.get_summary(start_date=future)
+        assert summary.total_cost == 0.0
+        assert summary.total_requests == 0
+
+    def test_narrow_window_excludes_entries(self):
+        tracker = CostTracker()
+        now = datetime.now(timezone.utc)
+        old_entry = CostEntry(
+            timestamp=now - timedelta(days=10),
+            model_name="gpt-4",
+            provider="openai",
+            tokens_used=1000,
+            cost_usd=0.03,
+        )
+        tracker.entries.append(old_entry)
+        # Query only last 2 days
+        summary = tracker.get_summary(start_date=now - timedelta(days=2))
+        assert summary.total_requests == 0
+
+
+# ---------------------------------------------------------------------------
+# Zero-Cost Operations
+# ---------------------------------------------------------------------------
+
+class TestZeroCostOperations:
+    """Tests for zero-cost operations."""
+
+    def test_zero_cost_recorded(self):
+        tracker = CostTracker()
+        tracker.record_cost("local-model", "local", 1000, 0.0)
+        assert len(tracker.entries) == 1
+        assert tracker.entries[0].cost_usd == 0.0
+
+    def test_zero_cost_in_summary(self):
+        tracker = CostTracker()
+        tracker.record_cost("local-model", "local", 1000, 0.0)
+        summary = tracker.get_summary()
+        assert summary.total_cost == 0.0
+        assert summary.total_requests == 1
+        assert summary.total_tokens == 1000
+
+
+# ---------------------------------------------------------------------------
+# Concurrent Cost Recording
+# ---------------------------------------------------------------------------
+
+class TestConcurrentCostRecording:
+    """Tests for concurrent access patterns."""
+
+    def test_sequential_recording_consistency(self):
+        """Verify consistency after many sequential records."""
+        tracker = CostTracker()
+        n = 100
+        for i in range(n):
+            tracker.record_cost(f"model-{i % 3}", "provider", 10, 0.001, f"user-{i % 5}")
+        assert len(tracker.entries) == n
+        summary = tracker.get_summary()
+        assert summary.total_requests == n
+        assert summary.total_cost == pytest.approx(n * 0.001)
+        assert summary.total_tokens == n * 10
+
+    def test_summary_cost_by_user_complete(self):
+        """Verify all users appear in the summary."""
+        tracker = CostTracker()
+        for uid in ["alice", "bob", "carol"]:
+            tracker.record_cost("gpt-4", "openai", 100, 0.01, uid)
+        summary = tracker.get_summary()
+        assert len(summary.cost_by_user) == 3
+        assert all(uid in summary.cost_by_user for uid in ["alice", "bob", "carol"])
+
+
+# ---------------------------------------------------------------------------
+# PersistentCostTracker — uses .get_summary() (no .entries)
+# ---------------------------------------------------------------------------
+
+try:
+    from nexus.core.tracking.persistent_cost_tracker import PersistentCostTracker
+    _HAS_PERSISTENT_TRACKER = True
+except ImportError:
+    _HAS_PERSISTENT_TRACKER = False
+
+
+@pytest.mark.skipif(not _HAS_PERSISTENT_TRACKER, reason="sqlalchemy not installed")
+class TestPersistentCostTrackerAPI:
+    """Verify PersistentCostTracker exposes get_summary but NOT .entries."""
+
+    def test_persistent_tracker_has_get_summary(self):
+        assert hasattr(PersistentCostTracker, "get_summary")
+
+    def test_persistent_tracker_has_record_cost(self):
+        assert hasattr(PersistentCostTracker, "record_cost")
+
+    def test_persistent_tracker_has_get_budget_status(self):
+        assert hasattr(PersistentCostTracker, "get_budget_status")
+
+    def test_persistent_tracker_has_reset_alerts(self):
+        assert hasattr(PersistentCostTracker, "reset_alerts")

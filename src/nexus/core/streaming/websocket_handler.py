@@ -56,7 +56,7 @@ class WebSocketHandler:
             
             emit('connection_established', {
                 'client_id': client_id,
-                'message': 'Connected to TheNexus streaming'
+                'message': 'Connected to Nexus streaming'
             })
         
         @self.socketio.on('disconnect')
