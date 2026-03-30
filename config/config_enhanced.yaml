@@ -1,0 +1,73 @@
+# Enhanced configuration with real model support
+
+model_ensemble:
+  models:
+    # OpenAI Models
+    - name: gpt-4
+      provider: openai
+      model_id: gpt-4
+      weight: 0.8
+      api_key: ${OPENAI_API_KEY}  # Set via environment variable
+      temperature: 0.7
+      max_tokens: 1000
+      timeout: 30
+
+    - name: gpt-3.5-turbo
+      provider: openai
+      model_id: gpt-3.5-turbo
+      weight: 0.6
+      api_key: ${OPENAI_API_KEY}
+      temperature: 0.7
+      max_tokens: 800
+      timeout: 20
+
+    # Anthropic Models
+    - name: claude-opus
+      provider: anthropic
+      model_id: claude-3-opus-20240229
+      weight: 0.9
+      api_key: ${ANTHROPIC_API_KEY}  # Set via environment variable
+      temperature: 0.7
+      max_tokens: 1000
+      timeout: 30
+
+    - name: claude-sonnet
+      provider: anthropic
+      model_id: claude-3-sonnet-20240229
+      weight: 0.7
+      api_key: ${ANTHROPIC_API_KEY}
+      temperature: 0.7
+      max_tokens: 800
+      timeout: 25
+
+    # Stub models for testing without API keys
+    - name: stub-model-1
+      provider: stub
+      weight: 0.3
+
+  feedback_loop:
+    enabled: true
+    check_hallucinations: true
+    min_consensus: 0.7  # Minimum agreement between models
+
+# Caching configuration
+cache:
+  enabled: true
+  backend: redis
+  host: localhost
+  port: 6379
+  ttl: 3600  # 1 hour
+  similarity_threshold: 0.95  # For semantic caching
+
+# Cost tracking
+cost_tracking:
+  enabled: true
+  budget_limit_usd: 100.0
+  alert_threshold: 0.8  # Alert at 80% of budget
+  track_per_user: true
+
+# Logging configuration
+logging:
+  level: INFO
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: logs/nexus.log

@@ -1,0 +1,11 @@
+version: '3'
+services:
+  ai_ensemble:
+    build:
+      context: ../../
+      dockerfile: deployment/docker/Dockerfile
+    ports:
+      - "8501:8501"
+    environment:
+      - PYTHONPATH=/app/src
+    command: ["python", "-m", "thenexus.ensemble_core"]

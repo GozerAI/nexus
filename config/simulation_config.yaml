@@ -1,0 +1,7 @@
+infrastructure_params = {
+    "quantum_layer": True,
+    "neuromorphic_units": 10**6,
+    "cloud_instances": 100_000,
+    "inter-node_latency": "<10us",
+    "data_center_locations": ["Earth", "Lunar", "Orbital"]
+}

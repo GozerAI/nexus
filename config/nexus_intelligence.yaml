@@ -1,0 +1,30 @@
+embedding:
+  auto_start_ollama: true
+  backend: ollama
+  batch_size: 32
+  builtin_model: all-mpnet-base-v2
+  cache_enabled: true
+  ollama_fallback_model: mxbai-embed-large
+  ollama_model: bge-base-en
+  ollama_url: http://localhost:11434
+  timeout_seconds: 30.0
+logging:
+  backup_count: 5
+  file: logs/nexus.log
+  level: DEBUG
+  max_size_mb: 10
+memory:
+  chunk_overlap: 200
+  include_context_messages: 10
+  max_chunk_size: 1505
+  min_chunk_size: 100
+storage:
+  auto_backup: true
+  backup_interval_hours: 24
+  backup_path: data/backups
+  chroma_path: data/chroma
+  sqlite_path: data/sqlite/nexus.db
+truth:
+  high_confidence_threshold: 0.9
+  medium_confidence_threshold: 0.9000000000000001
+  strict_mode: true

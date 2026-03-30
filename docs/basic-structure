@@ -1,0 +1,39 @@
+your-template-repo/
+│
+├── src/
+│   └── your_project/
+│       ├── __init__.py
+│       ├── core.py                 # example module
+│       └── license_check.py        # client-side license verification hook
+│
+├── services/
+│   └── license_server/
+│       ├── __init__.py
+│       └── license_server.py       # FastAPI verification API (skeleton)
+│
+├── tools/
+│   └── generate_license.py         # CLI to generate License IDs/keys
+│
+├── legal/
+│   ├── README.md
+│   ├── agreements/
+│   │   ├── CCA.md
+│   │   ├── EMPLOYER-CCA.md
+│   │   └── CONTRIBUTOR-ACKNOWLEDGEMENT.md
+│   └── licenses/
+│       ├── AGPL-3.0.txt
+│       └── COMMERCIAL-LICENSE.txt
+│
+├── .github/
+│   ├── workflows/
+│   │   └── cla.yml                 # CLA Assistant workflow
+│   └── pull_request_template.md    # PR template w/ legal checkboxes
+│
+├── tests/
+│   └── test_core.py
+│
+├── LICENSE                         # short AGPL notice (or full text)
+├── COMMERCIAL-LICENSE.txt          # mirror of legal/licenses version (optional)
+├── pyproject.toml                  # project + tooling config
+├── README.md
+└── .gitignore

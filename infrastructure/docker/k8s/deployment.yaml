@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: core-engine
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: core-engine
+  template:
+    metadata:
+      labels:
+        app: core-engine
+    spec:
+      containers:
+      - name: core-engine
+        image: superai/core-engine:latest
+        ports:
+        - containerPort: 5000

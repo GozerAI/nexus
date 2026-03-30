@@ -1,0 +1,62 @@
+[project]
+name = "nexus-ai"
+version = "1.0.0"
+description = "Advanced AI Ensemble, Orchestrator & Consciousness Framework"
+authors = [
+  { name = "Christopher R. Arsenault", email = "chris@gozerai.com" }
+]
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+dependencies = [
+    "aiohttp>=3.9.0,<4.0",
+    "anthropic>=0.7.0,<1.0",
+    "click>=8.1.0,<9.0",
+    "flask>=3.0.0,<4.0",
+    "httpx>=0.24.0,<1.0",
+    "pydantic>=2.0.0,<3.0",
+    "aiosqlite>=0.19.0,<1.0",
+    "openai>=1.0.0,<2.0",
+    "python-dateutil>=2.8.0,<3.0",
+    "python-dotenv>=1.0.0,<2.0",
+    "pyyaml>=6.0.0,<7.0",
+    "numpy>=1.24.0,<2.0",
+    "requests>=2.31.0,<3.0",
+    "sqlalchemy>=2.0.0,<3.0",
+    "tenacity>=8.2.0,<9.0",
+    "redis>=5.0.0,<6.0",
+    "alembic>=1.15,<2",
+    "prometheus-client>=0.20.0,<1.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/chrisarseno/Nexus"
+
+[project.scripts]
+nexus-cli = "nexus.cli.main:cli"
+nexus-chat = "nexus.cli.chat:main"
+nexus-api = "nexus.api.api:main"
+nexus-gui = "nexus.gui:run"
+
+[project.optional-dependencies]
+dev = ["pytest", "pytest-asyncio", "pytest-cov>=5.0.0,<6.0", "ruff", "mypy", "python-dotenv", "aiohttp", "flask", "tenacity", "prometheus-client", "pypdf>=5.4,<6.0", "sqlalchemy", "python-docx", "pandas", "datasets"]
+server = ["fastapi", "uvicorn[standard]", "pydantic", "requests"]
+mcp = ["mcp>=1.0.0,<2.0"]
+embeddings = ["sentence-transformers>=2.2.0,<3.0"]
+gui = ["PySide6>=6.5.0,<7.0"]
+full = ["PySide6>=6.5.0,<7.0", "sentence-transformers>=2.2.0,<3.0"]
+# Redis vector search
+redis = ["redis>=5.0.0,<6.0"]
+# Full with Redis
+full-redis = ["PySide6>=6.5.0,<7.0", "sentence-transformers>=2.2.0,<3.0", "redis>=5.0.0,<6.0"]
+# ChromaDB requires onnxruntime - install separately if needed
+chroma = ["chromadb>=0.4.13,<1.0"]
+telemetry = ["gozerai-telemetry @ git+https://github.com/chrisarseno/gozerai-telemetry.git@37c85891e1c560f07b2c3e1664a56c2eddae4bc2"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
